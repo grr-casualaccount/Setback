@@ -23,15 +23,13 @@
             align-items: center;
             font-family: 'Playfair Display', serif;
             overflow: hidden; 
-            position: relative; 
         }
 
         /* =========================================
-           2. LO SFONDO SFOCATO (Livello Fantasma)
+           2. IL NUOVO SFONDO SFOCATO (Infallibile)
            ========================================= */
-        body::before {
-            content: "";
-            position: absolute;
+        .sfondo-sfocato {
+            position: fixed; /* Sta incollato allo schermo */
             top: -5%; left: -5%; 
             width: 110%; height: 110%;
             
@@ -40,15 +38,18 @@
             
             background-size: cover;
             background-position: center;
+            filter: blur(15px); /* Effetto sfocato */
             
-            filter: blur(15px); /* Sfocatura */
-            z-index: -1; 
+            z-index: 1; /* Livello più basso */
         }
 
         /* =========================================
            3. IL CONTENITORE IN VETRO
            ========================================= */
         .glass-container {
+            position: relative; /* Serve per metterlo SOPRA allo sfondo */
+            z-index: 10; /* Sta davanti allo sfondo */
+            
             width: 90%; 
             max-width: 900px; 
             height: 85vh; 
@@ -78,7 +79,7 @@
         .glass-container::-webkit-scrollbar-track { background: transparent; }
 
         /* =========================================
-           4. AREA PDF (Niente più CSS per il bianco!)
+           4. AREA PDF
            ========================================= */
         #pdf-render-container {
             display: flex;
@@ -92,9 +93,6 @@
             height: auto;
             display: block;
             margin: 0; 
-            
-            /* Nessun filtro CSS qui, altrimenti il browser va in palla! 
-               Fa tutto il Javascript più in basso. */
         }
 
         #loading-msg {
@@ -113,11 +111,16 @@
 </head>
 <body>
 
+    <!-- IL NUOVO LIVELLO SFONDO -->
+    <div class="sfondo-sfocato"></div>
+
+    <!-- IL VETRO -->
     <div class="glass-container">
         <div id="loading-msg">Estrazione dell'inchiostro in corso...</div>
         <div id="pdf-render-container"></div>
     </div>
 
+    <!-- LA MAGIA JAVASCRIPT CHE CANCELLA IL BIANCO -->
     <script>
         // =========================================
         // 🔹 INSERISCI QUI IL NOME DEL TUO FILE PDF
@@ -136,9 +139,7 @@
                 for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
                     const page = await pdf.getPage(pageNum);
                     
-                    // Scala l'immagine (1.5 offre testo nitido e caricamento veloce)
                     const viewport = page.getViewport({ scale: 1.5 });
-                    
                     const canvas = document.createElement('canvas');
                     canvas.className = 'pdf-page-canvas';
                     const context = canvas.getContext('2d');
@@ -152,39 +153,26 @@
                         viewport: viewport
                     };
                     
-                    // Disegna la pagina PDF in memoria
                     await page.render(renderContext).promise;
 
-                    // ========================================================
-                    // 🪄 MAGIA JAVASCRIPT: DISTRUZIONE DEL FOGLIO BIANCO
-                    // ========================================================
-                    
-                    // Estraiamo tutti i pixel del foglio appena disegnato
+                    // Cancellazione pixel bianchi
                     const imgData = context.getImageData(0, 0, canvas.width, canvas.height);
                     const data = imgData.data;
                     
-                    // Scansioniamo pixel per pixel...
                     for (let i = 0; i < data.length; i += 4) {
                         const r = data[i];
                         const g = data[i+1];
                         const b = data[i+2];
                         
-                        // Calcoliamo quanto è "chiaro" il pixel (Luminosità)
                         const luminosita = 0.299 * r + 0.587 * g + 0.114 * b;
                         
-                        // Coloriamo il pixel con un verde-nero molto scuro (Stile San Mungo)
-                        data[i] = 15;     // Rosso
-                        data[i+1] = 25;   // Verde 
-                        data[i+2] = 20;   // Blu
+                        data[i] = 15;     
+                        data[i+1] = 25;   
+                        data[i+2] = 20;   
                         
-                        // Il trucco: L'Alpha (trasparenza) diventa l'inverso della luminosità.
-                        // I pixel neri (il testo) restano solidi, i pixel bianchi (il foglio) spariscono nel nulla!
                         data[i+3] = 255 - luminosita; 
                     }
-                    
-                    // Riapplichiamo l'inchiostro epurato dalla carta
                     context.putImageData(imgData, 0, 0);
-                    // ========================================================
                 }
             } catch (error) {
                 loadingMsg.innerHTML = "Errore: Impossibile caricare il file PDF.<br>Controlla che il nome sia corretto.";
