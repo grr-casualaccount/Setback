@@ -3,65 +3,71 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Setback</title>
+    <title>SETBACKS</title>
     
-    <!-- Importiamo i font eleganti -->
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;1,600&display=swap" rel="stylesheet">
-    
-    <!-- Importiamo la libreria per leggere i PDF in automatico -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
     <script>
-        // Configurazione obbligatoria per far funzionare il lettore PDF
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
     </script>
 
     <style>
         /* =========================================
-           1. SFONDO DELLA PAGINA
+           1. IMPOSTAZIONI GENERALI DELLA PAGINA
            ========================================= */
         body {
             margin: 0;
             height: 100vh;
             display: flex;
-            justify-content: center; /* Centra il contenitore orizzontalmente */
-            align-items: center;     /* Centra il contenitore verticalmente */
+            justify-content: center;
+            align-items: center;
             font-family: 'Playfair Display', serif;
-            overflow: hidden; /* Blocca lo scorrimento di tutta la pagina, si scorre solo nel vetro */
-            
-            /* QUI INSERISCI LA TUA IMMAGINE DI SFONDO */
-            /* Puoi mettere un URL di internet (http...) o il nome di un file nella stessa cartella (es. 'sfondo.jpg') */
-            background-image: url('sfondo_setback.png'); 
-            
-            background-size: contain; /* Fa in modo che l'immagine copra tutto lo schermo */
-            background-repeat: no-repeat;
-            background-color: #09100e; /* Un colore scuro che riempie lo spazio vuoto */
+            overflow: hidden; 
+            position: relative; /* Serve per ancorare lo sfondo sfocato */
         }
 
         /* =========================================
-           2. IL CONTENITORE IN VETRO
+           2. LO SFONDO SFOCATO (Livello Fantasma)
+           ========================================= */
+        body::before {
+            content: "";
+            position: absolute;
+            /* Allarghiamo leggermente oltre i bordi (-5%) per evitare che la sfocatura crei un alone bianco ai lati dello schermo */
+            top: -5%; left: -5%; 
+            width: 110%; height: 110%;
+            
+            /* INSERISCI QUI LA TUA IMMAGINE */
+            background-image: url('sfondo_setback.png'); 
+            
+            background-size: cover;
+            background-position: center;
+            
+            /* LA MAGIA DELLA SFOCATURA */
+            filter: blur(15px); /* Puoi aumentare (es. 20px) o diminuire questo valore */
+            
+            z-index: -1; /* Lo spinge dietro a tutto il resto */
+        }
+
+        /* =========================================
+           3. IL CONTENITORE IN VETRO
            ========================================= */
         .glass-container {
-            /* Dimensioni del contenitore */
             width: 90%; 
-            max-width: 900px; /* Larghezza massima per non renderlo troppo dispersivo su PC */
-            height: 85vh; /* Occupa l'85% dell'altezza dello schermo */
+            max-width: 900px; 
+            height: 85vh; 
             
-            /* EFFETTO VETRO (Glassmorphism) */
-            /* Un bianco al 75% di opacità: stacca dallo sfondo ma lascia intravedere i colori */
-            background: rgba(255, 255, 255, 0.75); 
-            backdrop-filter: blur(15px); /* Sfoca l'immagine di sfondo dietro al contenitore */
-            -webkit-backdrop-filter: blur(15px);
+            /* Vetro leggermente più opaco (0.6) per leggere bene il testo */
+            background: rgba(255, 255, 255, 0.6); 
+            backdrop-filter: blur(10px); 
+            -webkit-backdrop-filter: blur(10px);
             
-            /* Bordi e Ombre per dare tridimensionalità e staccarlo nettamente */
             border: 1px solid rgba(255, 255, 255, 0.5);
-            border-radius: 15px; /* Angoli arrotondati */
-            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+            border-radius: 15px; 
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.6);
             
-            /* Layout interno e scorrimento */
             padding: 40px;
-            overflow-y: auto; /* Permette di scorrere il contenuto in verticale */
+            overflow-y: auto; 
             
-            /* Questa transizione serve per un'apparizione morbida all'avvio */
             opacity: 0;
             animation: fadeIn 1s forwards 0.5s;
         }
@@ -70,37 +76,36 @@
             to { opacity: 1; }
         }
 
-        /* Personalizziamo la barra di scorrimento (Scrollbar) */
         .glass-container::-webkit-scrollbar { width: 8px; }
         .glass-container::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.3); border-radius: 10px; }
         .glass-container::-webkit-scrollbar-track { background: transparent; }
 
         /* =========================================
-           3. AREA DI RENDERIZZAZIONE DEL PDF
+           4. AREA PDF (IL MIMETISMO)
            ========================================= */
         #pdf-render-container {
             display: flex;
             flex-direction: column;
             align-items: center;
-            
-            /* IL TRUCCO: Azzeriamo lo spazio (gap) tra le pagine! */
-            gap: 0; 
+            gap: 0; /* Unisce le pagine */
         }
 
-        /* Lo stile di ogni singola "pagina" generata */
         .pdf-page-canvas {
-            width: 100%; /* La pagina si adatta alla larghezza del contenitore di vetro */
+            width: 100%; 
             height: auto;
             display: block;
-            margin: 0; /* Niente margini per farle attaccare l'una all'altra */
+            margin: 0; 
             
-            /* LA MAGIA DEL FOGLIO INVISIBILE:
-               'multiply' rende il bianco della pagina PDF trasparente (mostrando il vetro sotto) 
-               ma mantiene l'inchiostro nero o scuro perfettamente leggibile! */
+            /* 1. Mimetismo totale: fa sparire il bianco della carta */
             mix-blend-mode: multiply; 
+            
+            /* 2. Abbassiamo un po' l'opacità del testo per farlo sembrare stampato SUL vetro, non sopra */
+            opacity: 0.85; 
+            
+            /* 3. Aumentiamo leggermente il contrasto per evitare che il testo sbiadisca troppo */
+            filter: contrast(1.2);
         }
 
-        /* Scritta di caricamento iniziale */
         #loading-msg {
             text-align: center;
             font-size: 20px;
@@ -117,55 +122,38 @@
 </head>
 <body>
 
-    <!-- IL NOSTRO VETRO -->
     <div class="glass-container">
-        <!-- Messaggio che appare mentre il file viene caricato -->
         <div id="loading-msg">Lettura del documento in corso...</div>
-        
-        <!-- Qui dentro il Javascript "disegnerà" le pagine del PDF -->
         <div id="pdf-render-container"></div>
     </div>
 
-    <!-- SCRIPT CHE GESTISCE IL PDF -->
     <script>
         // =========================================
         // 🔹 INSERISCI QUI IL NOME DEL TUO FILE PDF
         // =========================================
-        const myPdfUrl = 'Setbacks.pdf'; // Assicurati che sia nella stessa cartella
+        const myPdfUrl = 'setbacks.pdf';
 
         const container = document.getElementById('pdf-render-container');
         const loadingMsg = document.getElementById('loading-msg');
 
-        // Funzione asincrona che legge e disegna il PDF
         async function loadAndRenderPDF() {
             try {
-                // 1. Carica il documento
                 const loadingTask = pdfjsLib.getDocument(myPdfUrl);
                 const pdf = await loadingTask.promise;
-                
-                // 2. Nasconde la scritta di caricamento
                 loadingMsg.style.display = 'none';
                 
-                // 3. Cicla attraverso TUTTE le pagine del PDF (1, 2, 3...)
                 for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
                     const page = await pdf.getPage(pageNum);
-                    
-                    // Imposta la qualità (1.5 o 2.0 sono ottimi per renderlo nitido)
                     const viewport = page.getViewport({ scale: 2.0 });
                     
-                    // Crea un elemento <canvas> (una sorta di "tela" dove dipingere la pagina)
                     const canvas = document.createElement('canvas');
                     canvas.className = 'pdf-page-canvas';
                     const context = canvas.getContext('2d');
                     
-                    // Assegna le dimensioni originali della pagina alla tela
                     canvas.height = viewport.height;
                     canvas.width = viewport.width;
-                    
-                    // Attacca la tela al contenitore in HTML
                     container.appendChild(canvas);
                     
-                    // Dice a PDF.js di "dipingere" il testo sulla tela
                     const renderContext = {
                         canvasContext: context,
                         viewport: viewport
@@ -173,14 +161,12 @@
                     await page.render(renderContext).promise;
                 }
             } catch (error) {
-                // Se il file non esiste o c'è un errore, mostra questo messaggio
                 loadingMsg.innerHTML = "Errore: Impossibile caricare il file PDF.<br>Controlla che il nome (myPdfUrl) sia corretto.";
                 loadingMsg.style.color = "red";
                 console.error(error);
             }
         }
 
-        // Avvia la magia non appena la pagina viene aperta
         loadAndRenderPDF();
     </script>
 </body>
