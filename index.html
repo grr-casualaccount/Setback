@@ -96,14 +96,15 @@
             display: block;
             margin: 0; 
             
-            /* 1. Mimetismo totale: fa sparire il bianco della carta */
+            /* LA MAGIA CHE ELIMINA IL BIANCO */
+            /* Multiply letteralmente "moltiplica" i colori: 
+               il bianco scompare del tutto, il nero resta intatto! */
             mix-blend-mode: multiply; 
             
-            /* 2. Abbassiamo un po' l'opacità del testo per farlo sembrare stampato SUL vetro, non sopra */
-            opacity: 0.85; 
+            /* Fondamentale per alcuni browser (come Safari) */
+            -webkit-mix-blend-mode: multiply;
             
-            /* 3. Aumentiamo leggermente il contrasto per evitare che il testo sbiadisca troppo */
-            filter: contrast(1.2);
+            /* Nessun altro filtro qui, altrimenti il trucco si rompe! */
         }
 
         #loading-msg {
